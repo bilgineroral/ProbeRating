@@ -6,9 +6,11 @@ Created on Sat November 30 10:57:52 2019
 import os
 from Bio import SeqIO
 import sys
+
 from gensim.models import fasttext
 from gensim.models import doc2vec
 from gensim.models import word2vec
+from gensim.models.doc2vec import TaggedDocument
 from gensim.utils import simple_preprocess
 
 
@@ -94,13 +96,13 @@ def read_corpus(fname, tokens_only=False):
     Not used
     For d2vbioseq's doc2vec, pre-process each file and return a list of words
     '''
-    with smart_open.smart_open(fname, encoding="iso-8859-1") as f:
+    with open(fname, encoding="iso-8859-1") as f:
         for i, line in enumerate(f):
             if tokens_only:
-                yield gensim.utils.simple_preprocess(line)
+                yield simple_preprocess(line)
             else:
                 # For training data, add tags
-                yield gensim.models.doc2vec.TaggedDocument(gensim.utils.simple_preprocess(line), [i])
+                yield TaggedDocument(simple_preprocess(line), [i])
 
 
 
@@ -151,11 +153,11 @@ class ftbioseq(embedbioseq, fasttext.FastText):
         embedbioseq.__init__(self, fname, corpus, n, size)
 
         if fname is not None:
-            print 'Generate Corpus file from fasta file...'
+            print ('Generate Corpus file from fasta file...')
             generate_corpusfile(fname, n, out)
             corpus = word2vec.Text8Corpus(out)
 
-        fasttext.FastText.__init__(self, corpus, size=size, sg=sg, window=window, min_count=min_count, min_n=min_n, max_n=max_n)
+        fasttext.FastText.__init__(self, corpus, vector_size=size, sg=sg, window=window, min_count=min_count, min_n=min_n, max_n=max_n)
 
         #syang: clean up the intermediate file
         if os.path.exists(out):
@@ -170,7 +172,7 @@ class ftbioseq(embedbioseq, fasttext.FastText):
             ngram_vecs = []
             for ngram in ngrams:
                 try:
-                    ngram_vecs.append(self[ngram])
+                    ngram_vecs.append(self.wv[ngram])
                 except:
                     # this exception should never happen though; keep to check correctness
                     raise Exception("OOV! FastText-FastBioseq model has never trained this k-mer: " + ngram)
@@ -202,8 +204,8 @@ class d2vbioseq(embedbioseq, doc2vec.Doc2Vec):
         embedbioseq.__init__(self, fname, corpus, n, size)
 
         if fname is not None:
-            print 'Generate Corpus file from fasta file...'
-            generate_corpusfile_overlappedKmers(corpus_fname, n, out)
+            print ('Generate Corpus file from fasta file...')
+            generate_corpusfile_overlappedKmers(fname, n, out)
             corpus=[doc2vec.TaggedDocument(simple_preprocess(line), [i]) for i, line in enumerate(open(out))]
 
         doc2vec.Doc2Vec.__init__(self, corpus, vector_size=size, dm=dm, window=window, min_count=min_count)
@@ -255,7 +257,7 @@ class w2vbioseq(embedbioseq, word2vec.Word2Vec):
         embedbioseq.__init__(self, fname, corpus, n, size)
 
         if fname is not None:
-            print 'Generate Corpus file from fasta file...'
+            print ('Generate Corpus file from fasta file...')
             generate_corpusfile(fname, n, out)
             corpus = word2vec.Text8Corpus(out)
 

@@ -4,34 +4,36 @@ Created on Sat November 30 21:14:09 2019
 @author: Shu Yang
 
 """
+import numpy as np
+import tensorflow as tf
 
+from tensorflow.keras import backend as K
+from tensorflow.keras import layers
+from tensorflow.keras.layers import Layer
 
 import scipy.io as sio
 import scipy.sparse as sparse
 import numpy as np
-from keras import models
-from keras import layers
-from keras import regularizers
-from keras import backend
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, TensorBoard
-from keras.utils.vis_utils import model_to_dot
+from tensorflow.keras import models
+# from keras import layers
+from tensorflow.keras import regularizers
+# from keras import backend
 
-from scipy.stats.stats import spearmanr
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, TensorBoard
+from tensorflow.keras.utils import model_to_dot
+
+""" from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, TensorBoard
+from keras.utils.vis_utils import model_to_dot """
+
+from scipy.stats import spearmanr
 import sys
 import os
-import tensorflow as tf
-from keras import backend as K
-from keras import optimizers
-from keras import Input
+#from keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras import Input
 from scipy.linalg import orth
-from keras import activations
 import h5py
 import time
-
-
-
-
-
 
 lossIdx = int(sys.argv[1])
 optimizerIdx = int(sys.argv[2])
@@ -64,22 +66,12 @@ elif lossIdx==3:
     myLoss='mean_squared_logarithmic_error'
 elif lossIdx==4:
     myLoss='logcosh'
-  
-if optimizerIdx==1:
-    myOptimizer=optimizers.RMSprop(lr=lrate, rho=0.9, epsilon=None, decay=0.0) 
-elif optimizerIdx==2:
-    myOptimizer = optimizers.Adam(lr=lrate, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)          
 
 
 sysuffix=os.getppid()   #get parent .sh process's PID
 namePrefix='probeRating_nn_'+'rrm_p2vFT'+isP2V
 syspec=namePrefix+'_noPermuteValid'+sys.argv[9]+'_loss'+sys.argv[1]+'_optimizer'+sys.argv[2]+'_lr'+sys.argv[3]+'_epochs'+sys.argv[4]+'_batchesPerEpoch'+sys.argv[5]+'_folds'+sys.argv[6]+'_ElasticNetAlpha'+sys.argv[7]+'_ElasticNetL1ratio'+sys.argv[8]+'_normalizeFeature'+sys.argv[12]+'_'+sys.argv[13]+'_dropOutRate'+sys.argv[14]+'_plateauPatience'+sys.argv[15]+'_earlyStopPatience'+sys.argv[16]+'_batchSize'+sys.argv[17]
 dateTime = time.strftime("%Y_%m_%d-%H_%M_%S")
-
-
-
-
-
 
 
 ####################################
@@ -180,7 +172,7 @@ def correlation_coefficient_loss(y_true, y_pred):
 
 
 
-class Kron(layers.merge._Merge):
+class Kron(Layer):
     """Merge Layer that mimic Kronecker product on a list of 2 inputs
     """
     def __init__(self, axis=-1, **kwargs):
@@ -188,21 +180,20 @@ class Kron(layers.merge._Merge):
         **kwargs: standard layer keyword arguments.
         """
         super(Kron, self).__init__(**kwargs)
-        self.axis=axis
-        self._reshape_required = False  # to be compatible with super class layers.merge._Merge's call() method
+        self.axis = axis
 
     def build(self, input_shape):
         pass
 
-    def _merge_function(self, inputs):
+    def call(self, inputs):
         """
         Do Kronecker product on the last axis for the 2 input tensors. Note inputs tensors should have equal dimension for axis=0 case (ie. batchsize should be equal). 
-
+        
         Alternatively, if inputs tensors have equal dimensions, can also use the implementation in outer_product() function below. 
         """
-        output=K.repeat_elements(inputs[0], K.int_shape(inputs[1])[1], -1)
-        inputs1_tiled=K.tile(inputs[1], [1, K.int_shape(inputs[0])[1]])
-        return output*inputs1_tiled 
+        output = K.repeat_elements(inputs[0], K.int_shape(inputs[1])[1], -1)
+        inputs1_tiled = K.tile(inputs[1], [1, K.int_shape(inputs[0])[1]])
+        return output * inputs1_tiled
         
     @staticmethod    
     def outer_product(inputs):
@@ -241,6 +232,12 @@ def kronecker(inputs, **kwargs):
     """
     return Kron(**kwargs)(inputs)
 
+
+def get_optimizer(optimizerIdx=2):
+    if optimizerIdx==1:
+        return optimizers.RMSprop(learning_rate=lrate, rho=0.9, epsilon=None, decay=0.0) 
+    elif optimizerIdx==2:
+        return optimizers.Adam(learning_rate=lrate, beta_1=0.9, beta_2=0.999, decay=0.0, amsgrad=False)          
 
 
 
@@ -288,15 +285,20 @@ for fold in range(k):
     #############
     ## set up model
     #############
+
     if activationFunc=='selu':
         myInitializer="lecun_normal"
     elif activationFunc=='tanh':
-        myInitializer="glorot_uniform" 
+        myInitializer="glorot_uniform"
+    
 
     tensorBoardDir="../deepNN/%s-pid%d/%s/fold%d"%(dateTime, sysuffix, namePrefix, fold)   #/tensorBoardLog
+
+    print(tensorBoardDir)
+    
     if not os.path.exists(tensorBoardDir):
         os.makedirs(tensorBoardDir)
-    checkPtFile='../deepNN/%s-pid%d/p2v-fold%d.hdf5'%(dateTime, sysuffix, fold)
+    checkPtFile='../deepNN/%s-pid%d/p2v-fold%d.keras'%(dateTime, sysuffix, fold)
     scriptInputArgs='../deepNN/%s-pid%d/scriptInputArgs.txt'%(dateTime, sysuffix)
     with open(scriptInputArgs,'w') as textFile:
         print(syspec, file=textFile)
@@ -326,7 +328,7 @@ for fold in range(k):
     #merged=layers.multiply([x1, x2]) 
     similarity=layers.Dense(units=1, kernel_regularizer=regularizers.l1_l2(l1=l1weight, l2=l2weight))(merged) 
     network1=models.Model([protTensor, rnaTensor], similarity) 
-    network1.compile(optimizer=myOptimizer, loss=myLoss, metrics=[correlation_coefficient_loss]) 
+    network1.compile(optimizer=get_optimizer(optimizerIdx=optimizerIdx), loss=myLoss, metrics=[correlation_coefficient_loss]) 
     callbacksList=[ModelCheckpoint(filepath=checkPtFile, verbose=1, monitor="val_loss", save_best_only=True), ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=plateauPatience, min_lr=0.000001), EarlyStopping(monitor="val_loss", patience=earlyStopPatience), TensorBoard(tensorBoardDir, histogram_freq=0, embeddings_freq=0)] 
 
 
@@ -334,6 +336,11 @@ for fold in range(k):
     ## fit model
     #############
     ## no-generator version:
+
+    protTrainIN = tf.convert_to_tensor(protTrainIN, dtype=tf.float32)
+    rnaTrainIN = tf.convert_to_tensor(rnaTrainIN, dtype=tf.float32)
+    similarityTrainIN = tf.convert_to_tensor(similarityTrainIN, dtype=tf.float32)
+
     history=network1.fit([protTrainIN, rnaTrainIN], similarityTrainIN, batch_size=batchSize, epochs=epochsNum, verbose=2, callbacks=callbacksList, validation_split=0.1, shuffle=True)
 
 
@@ -347,14 +354,11 @@ for fold in range(k):
     # option2:  Moore-Penrose pseudo inverse reconstruction:
     intensityPred1=np.dot(np.linalg.pinv(intensityTrain.T), predictedSimilarity)
 
+    print(intensityPred.shape)
+
     for i in range(test_ix.shape[0]):
         CCs[test_ix[i], 1], CCs[test_ix[i], 2]=spearmanr(intensityPred[:,i], intensityTest[:,i])
         CCs1[test_ix[i], 1], CCs1[test_ix[i], 2]=spearmanr(intensityPred1[:,i], intensityTest[:,i])
-
-
-
-
-
 
 
 #######################

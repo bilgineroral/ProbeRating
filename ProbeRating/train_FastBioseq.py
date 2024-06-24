@@ -18,7 +18,7 @@ def train_ftbioseq(inFile='example.fasta', outFile='./trained_models/exampleMode
 	pv = fastbioseq.ftbioseq(inFile, n=k, size=vecDim, min_count=minCount, min_n=2, max_n=k) 
 	pv.save(outFile)
 	h = hpy()
-	print h.heap()
+	print (h.heap())
 	return None #for memory profile purpose
 
 
@@ -31,7 +31,7 @@ def train_d2vbioseq(inFile='example.fasta', outFile='exampleModel', vecDim=50, k
 	pv = fastbioseq.d2vbioseq(inFile, n=k, size=vecDim, min_count=minCount) 
 	pv.save(outFile)
 	h = hpy()
-	print h.heap()
+	print (h.heap())
 	return None #for memory profile purpose
 
 
@@ -44,7 +44,7 @@ def train_w2vbioseq(inFile='example.fasta', outFile='exampleModel', vecDim=50, k
 	pv = fastbioseq.w2vbioseq(inFile, n=k, size=vecDim, min_count=minCount) 
 	pv.save(outFile)
 	h = hpy()
-	print h.heap()
+	print (h.heap())
 	return None #for memory profile purpose
 
 

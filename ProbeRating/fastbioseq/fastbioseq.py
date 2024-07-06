@@ -157,7 +157,7 @@ class ftbioseq(embedbioseq, fasttext.FastText):
             generate_corpusfile(fname, n, out)
             corpus = word2vec.Text8Corpus(out)
 
-        fasttext.FastText.__init__(self, corpus, vector_size=size, sg=sg, window=window, min_count=min_count, min_n=min_n, max_n=max_n)
+        fasttext.FastText.__init__(self, corpus, size=size, sg=sg, window=window, min_count=min_count, min_n=min_n, max_n=max_n)
 
         #syang: clean up the intermediate file
         if os.path.exists(out):

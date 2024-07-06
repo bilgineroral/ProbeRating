@@ -88,11 +88,6 @@ protf=protf.T
 if p2vFile!='0':
     protf=np.genfromtxt(p2vFile, delimiter=',')
 
-
-
-
-
-
 #######
 ## Tmp: normalize the input, only needed for SELU activation function
 #######
@@ -104,11 +99,6 @@ if normalizeFeature==1:
     protf-=protf.mean(axis=0)
     protf /=protf.std(axis=0)
 
-
-
-
-
-
 ############################################
 ## Initialize some global var
 ############################################
@@ -117,11 +107,6 @@ np.random.seed(randomNumSeed)
 
 probeNum=len(RNAf)  
 proteinNum=len(protf)   
-
-
-
-
-
 
 #########################
 ## make data (no generator)
@@ -133,11 +118,6 @@ labelp=label[:][:,ridx]
 k=numFolds    
 fold_ix=np.rint(np.linspace(0,proteinNum,k+1))
 fold_ix=fold_ix.astype(int)
-
-
-
-
-
 
 ############################
 ## prereq for neural net
@@ -235,9 +215,9 @@ def kronecker(inputs, **kwargs):
 
 def get_optimizer(optimizerIdx=2):
     if optimizerIdx==1:
-        return optimizers.RMSprop(learning_rate=lrate, rho=0.9, epsilon=None, decay=0.0) 
+        return optimizers.RMSprop(learning_rate=lrate, rho=0.9, epsilon=None) 
     elif optimizerIdx==2:
-        return optimizers.Adam(learning_rate=lrate, beta_1=0.9, beta_2=0.999, decay=0.0, amsgrad=False)          
+        return optimizers.Adam(learning_rate=lrate, beta_1=0.9, beta_2=0.999, amsgrad=False)          
 
 
 
@@ -298,7 +278,7 @@ for fold in range(k):
     
     if not os.path.exists(tensorBoardDir):
         os.makedirs(tensorBoardDir)
-    checkPtFile='../deepNN/%s-pid%d/p2v-fold%d.keras'%(dateTime, sysuffix, fold)
+    checkPtFile='../deepNN/%s-pid%d/p2v-fold%d.hdf5'%(dateTime, sysuffix, fold)
     scriptInputArgs='../deepNN/%s-pid%d/scriptInputArgs.txt'%(dateTime, sysuffix)
     with open(scriptInputArgs,'w') as textFile:
         print(syspec, file=textFile)

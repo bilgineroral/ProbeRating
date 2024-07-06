@@ -8,7 +8,7 @@ import sys
 #sys.path.append(**add your FastBioseq path here**)
 import fastbioseq
 from memory_profiler import profile
-from guppy import hpy
+# from guppy import hpy
 
 @profile
 def train_ftbioseq(inFile='example.fasta', outFile='./trained_models/exampleModel', vecDim=50, k=3, minCount=2):
@@ -17,8 +17,8 @@ def train_ftbioseq(inFile='example.fasta', outFile='./trained_models/exampleMode
 	'''
 	pv = fastbioseq.ftbioseq(inFile, n=k, size=vecDim, min_count=minCount, min_n=2, max_n=k) 
 	pv.save(outFile)
-	h = hpy()
-	print (h.heap())
+	# h = hpy()
+	# print (h.heap())
 	return None #for memory profile purpose
 
 
@@ -30,8 +30,8 @@ def train_d2vbioseq(inFile='example.fasta', outFile='exampleModel', vecDim=50, k
 	'''
 	pv = fastbioseq.d2vbioseq(inFile, n=k, size=vecDim, min_count=minCount) 
 	pv.save(outFile)
-	h = hpy()
-	print (h.heap())
+	# h = hpy()
+	# print (h.heap())
 	return None #for memory profile purpose
 
 
@@ -43,8 +43,8 @@ def train_w2vbioseq(inFile='example.fasta', outFile='exampleModel', vecDim=50, k
 	'''
 	pv = fastbioseq.w2vbioseq(inFile, n=k, size=vecDim, min_count=minCount) 
 	pv.save(outFile)
-	h = hpy()
-	print (h.heap())
+	# h = hpy()
+	# print (h.heap())
 	return None #for memory profile purpose
 
 

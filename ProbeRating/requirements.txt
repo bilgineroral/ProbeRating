@@ -21,6 +21,7 @@ keras==2.13.1
 libclang==18.1.1
 Markdown==3.6
 MarkupSafe==2.1.5
+memory-profiler==0.61.0
 mygene==3.2.2
 numpy==1.24.3
 oauthlib==3.2.2
@@ -30,6 +31,7 @@ pandas==2.0.3
 platformdirs==4.2.2
 pooch==1.8.2
 protobuf==4.25.3
+psutil==6.0.0
 pyasn1==0.6.0
 pyasn1_modules==0.4.0
 python-dateutil==2.9.0.post0
